@@ -1,3 +1,7 @@
+Project Proposal
+-----------------
+Dr. Alon Friedman (professor at the University of South Florida)
+
 Author
 -------
 Mihir Patel
