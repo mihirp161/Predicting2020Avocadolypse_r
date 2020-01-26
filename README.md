@@ -16,4 +16,4 @@ Forecasting the price of Hass Avocados in 2020 using the time-series, and ARIMA.
 
 Packages
 --------------------
- tideyverse, lubridate, tseries, forecast, anytime, knitr
+ tideyverse, lubridate, tseries, forecast, anytime, knitr, ggplot2,ggfortify, ggthemes
