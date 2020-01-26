@@ -9,8 +9,9 @@ library(anytime)
 library(repr)
 library(gridExtra)
 library(knitr)
+library(ggfortify)
 
-
+options(scipen=10000)
 #********************************Data Grooming for the Analysis*********************************
 #read in the data file containing Hass Avocados
 #
@@ -131,27 +132,27 @@ totvol_org <- sum_organic[,-2]
 
 # Time series prep for both labels
 #
-ts_avgprice_con <- ts(avgprice_org, start = c(2015,1), frequency = 52)
-ts_totvol_con <- ts(totvol_org, start = c(2015, 1), frequency = 52)
+ts_avgprice_con <- stats::ts(avgprice_con, start = c(2015,1), frequency = 52)
+ts_totvol_con <- stats::ts(totvol_con, start = c(2015, 1), frequency = 52)
 
-ts_avgprice_org <- ts(avgprice_org, start = c(2015,1), frequency = 52)
-ts_totvol_org <- ts(totvol_org, start = c(2015, 1), frequency = 52)
+ts_avgprice_org <- stats::ts(avgprice_org, start = c(2015,1), frequency = 52)
+ts_totvol_org <- stats::ts(totvol_org, start = c(2015, 1), frequency = 52)
 
 #plot the time series graph for the price portion of the conventional label
 #
-plot(ts_avgprice_con[,2], xlab= "Continous Yearly Data", ylab= "Average Price", col= "#23BAF0", main= "Time Series: Conventional Label Pricing")
+ggplot2::autoplot(ts_avgprice_con[,2], xlab= "Continous Yearly Data", ylab= "Average Price",main= "Time Series of Pricing\nConventional Label", colour = "#a9ab3a")
 
 #plot the time series graph for the volume portion of the conventional label
 #
-plot(ts_totvol_con[,2], xlab= "Continous Yearly Data", ylab= "Total Volume", col= "#23BAF0", main= "Time Series: Conventional Label Volume")
+ggplot2::autoplot(ts_totvol_con[,2],xlab= "Continous Yearly Data", ylab= "Total Volume(tons)",main= "Time Series of Volume\nConventional Label", colour = "#a9ab3a")
 
 #plot the time series graph for the price portion of the organic label
 #
-plot(ts_avgprice_org[,2], xlab= "Continous Yearly Data", ylab= "Average Price", col= "#EE9D11", main= "Time Series: Organic Label Pricing")
+ggplot2::autoplot(ts_avgprice_org[,2], xlab= "Continous Yearly Data", ylab= "Average Price", main= "Time Series of Pricing\nOrganic Label", colour = "#4fa839")
 
 #plot the time series graph for the volume portion of the organic label
 #
-plot(ts_totvol_org[,2], xlab= "Continous Yearly Data", ylab= "Total Volume", col= "#EE9D11", main= "Time Series: Organic Label Volume")
+ggplot2::autoplot(ts_totvol_org[,2], xlab= "Continous Yearly Data", ylab= "Total Volume(tons)",main= "Time Series of Volume\nOrganic Label", colour = "#4fa839")
 
 #Pridicting the volume, average pricing for both labels through Auto Regressive Integrated Moving Average (ARIMA)
 #
@@ -164,52 +165,47 @@ plot(ts_totvol_org[,2], xlab= "Continous Yearly Data", ylab= "Total Volume", col
 
 # Creating ARIMA variables for forecasting the VOLUME in future years for CONVENTIONAL LABEL
 #
-arima_var_volCon = Arima(ts_totvol_con[,2], order = c(0,1,1), seasonal = c(0,1,0), include.mean= T) 
-prediction <- predict(arima_var_volCon, n.ahead= 150) 
+best_arima_model <- auto.arima(ts_totvol_con[,2], d=1, D=1, stepwise=FALSE, approximation=FALSE, trace=TRUE) #find the best ARIMA Fit
+forecast_model <- forecast(best_arima_model, h=140) #then forcast
 
-par(mfrow= c(2,1))
-plot(ts_totvol_con[,2], type= "l", xlim= c(2015, 2020), ylim= c(-50000, 200000), xlab= "Year", ylab= "Total Volume", main= "Forecast: Conventional Label Volume Towards Yr. 2020")
-points(prediction$pred, col= "#924910")
-lines(prediction$pred+prediction$se, col= "red")
-lines(prediction$pred-prediction$se, col= "skyblue")
-lines(prediction$pred+2*prediction$se, col= "green")
-lines(prediction$pred-2*prediction$se, col= "pink")
+ggplot2::autoplot(forecast_model, include=60, colour = "#a9ab3a") +
+            theme(plot.title=element_text(hjust=0.5),
+                  legend.position="bottom", 
+                  legend.background = element_rect(fill="#FFF9F5",size=0.5, linetype="solid", colour ="black")) + 
+            labs(title="Forecasting Volume of \n Conventional Avocados Towards 2021", x="Year", y="Total Volume(tons)")
+
 
 # Creating ARIMA variables for forecasting the PRICE in future years for CONVENTIONAL LABEL
 #
-arima_var_priCon = Arima(ts_avgprice_con[,2], order = c(1,0,0), seasonal = c(0,1,0), include.mean= T) 
-prediction <- predict(arima_var_priCon, n.ahead= 150) 
+best_arima_model <- auto.arima(ts_avgprice_con[,2], d=1, D=1, stepwise=FALSE, approximation=FALSE, trace=TRUE) #find the best ARIMA Fit
+forecast_model <- forecast(best_arima_model, h=140) #then forcast
 
-par(mfrow= c(2,1))
-plot(ts_avgprice_con[,2], type= "l", xlim= c(2015, 2020), ylim= c(0, 4), xlab= "Year", ylab= "Average Price", main= "Forecast: Conventional Label Average Price Towards Yr. 2020")
-points(prediction$pred, col= "#924910")
-lines(prediction$pred+prediction$se, col= "skyblue")
-lines(prediction$pred-prediction$se, col= "red")
-lines(prediction$pred+2*prediction$se, col= "pink")
-lines(prediction$pred-2*prediction$se, col= "green")
+ggplot2::autoplot(forecast_model, include=60, colour = "#a9ab3a") +
+            theme(plot.title=element_text(hjust=0.5),
+                  legend.position="bottom", 
+                  legend.background = element_rect(fill="#FFF9F5",size=0.5, linetype="solid", colour ="black")) + 
+            labs(title="Forecasting Prices of \n Conventional Avocados Towards 2021", x="Year", y="Price")
 
 # Creating ARIMA variables for forecasting the VOLUME in future years for ORGANIC LABEL
 #
-arima_var_volOrg = Arima(ts_totvol_org[,2], order = c(1,0,0), seasonal = c(1,1,0), include.mean= T) 
-prediction <- predict(arima_var_volOrg, n.ahead= 150) 
+best_arima_model <- auto.arima(ts_totvol_org[,2], d=1, D=1, stepwise=FALSE, approximation=FALSE, trace=TRUE) #find the best ARIMA Fit
+forecast_model <- forecast(best_arima_model, h=140) #then forcast
 
-par(mfrow= c(2,1))
-plot(ts_totvol_con[,2], type= "l", xlim= c(2015, 2020), ylim= c(-50000, 140000), xlab= "Year", ylab= "Total Volume", main= "Forecast: Organic Label Volume Towards Yr. 2020")
-points(prediction$pred, col= "#924910")
-lines(prediction$pred+prediction$se, col= "orange")
-lines(prediction$pred-prediction$se, col= "green")
-lines(prediction$pred+2*prediction$se, col= "blue")
-lines(prediction$pred-2*prediction$se, col= "yellow")
+ggplot2::autoplot(forecast_model, include=60, colour = "#4fa839") +
+            theme(plot.title=element_text(hjust=0.5),
+                  legend.position="bottom", 
+                  legend.background = element_rect(fill="#FFF9F5",size=0.5, linetype="solid", colour ="black")) + 
+            labs(title="Forecasting Volume of \n Organic Avocados Towards 2021", x="Year", y="Total Volume(tons)")
+
 
 # Creating ARIMA variables for forecasting the PRICE in future years for ORGANIC LABEL
 #
-arima_var_priOrg = Arima(ts_avgprice_org[,2], order = c(3,1,1), seasonal = c(0,1,0), include.mean= T) 
-prediction <- predict(arima_var_priOrg, n.ahead= 150) 
+best_arima_model <- auto.arima(ts_avgprice_org[,2], d=1, D=1, stepwise=FALSE, approximation=FALSE, trace=TRUE) #find the best ARIMA Fit
+forecast_model <- forecast(best_arima_model, h=140) #then forcast
 
-par(mfrow= c(2,1))
-plot(ts_avgprice_org[,2], type= "l", xlim= c(2015, 2020), ylim= c(0, 3.8), xlab= "Year", ylab= "Average Price", main= "Forecast: Organic Label Average Price Towards Yr. 2020")
-points(prediction$pred, col= "#924910")
-lines(prediction$pred+prediction$se, col= "green")
-lines(prediction$pred-prediction$se, col= "orange")
-lines(prediction$pred+2*prediction$se, col= "yellow")
-lines(prediction$pred-2*prediction$se, col= "blue")
+ggplot2::autoplot(forecast_model, include=60, colour = "#4fa839") +
+            theme(plot.title=element_text(hjust=0.5),
+                  legend.position="bottom", 
+                  legend.background = element_rect(fill="#FFF9F5",size=0.5, linetype="solid", colour ="black")) + 
+            labs(title="Forecasting Prices of \n Organic Avocados Towards 2021", x="Year", y="Price")
+
